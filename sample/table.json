@@ -1,0 +1,130 @@
+{
+  "state": {
+    "weights": [],
+    "prob": [],
+    "alias": [],
+    "total": 0,
+    "rng": 7,
+    "draws": [],
+    "hits": [],
+    "built": 0,
+    "added": 0,
+    "changed": 0,
+    "drawn": 0
+  },
+  "events": [
+    {
+      "kind": "build"
+    },
+    {
+      "kind": "add",
+      "weight": 5
+    },
+    {
+      "kind": "add",
+      "weight": 2
+    },
+    {
+      "kind": "add",
+      "weight": 1
+    },
+    {
+      "kind": "add",
+      "weight": 3
+    },
+    {
+      "kind": "build"
+    },
+    {
+      "kind": "wind",
+      "seed": 11
+    },
+    {
+      "kind": "draw",
+      "count": 3
+    },
+    {
+      "kind": "add",
+      "weight": 4
+    },
+    {
+      "kind": "draw",
+      "count": 2
+    },
+    {
+      "kind": "set",
+      "at": 2,
+      "weight": 0
+    },
+    {
+      "kind": "draw",
+      "count": 1
+    },
+    {
+      "kind": "add",
+      "weight": -2
+    },
+    {
+      "kind": "wind",
+      "seed": -1
+    },
+    {
+      "kind": "draw",
+      "count": -3
+    },
+    {
+      "kind": "set",
+      "at": 9,
+      "weight": 1
+    },
+    {
+      "kind": "set",
+      "at": 1,
+      "weight": 1.5
+    },
+    {
+      "kind": "wind",
+      "seed": 0
+    },
+    {
+      "kind": "draw",
+      "count": 0
+    },
+    {
+      "kind": "add",
+      "weight": 0
+    },
+    {
+      "kind": "wind",
+      "seed": 4294967295
+    },
+    {
+      "kind": "draw",
+      "count": 1
+    },
+    {
+      "kind": "build"
+    },
+    {
+      "kind": "draw",
+      "count": 1
+    },
+    {
+      "kind": "add",
+      "weight": 3
+    },
+    {
+      "kind": "draw",
+      "count": 1
+    },
+    {
+      "kind": "set",
+      "at": 2,
+      "weight": -4
+    },
+    {
+      "kind": "draw",
+      "count": 1
+    }
+  ]
+}

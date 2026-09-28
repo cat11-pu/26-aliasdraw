@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>aliasdraw 份数落点阵</title>
+<style>
+:root{--ink:#1b1d22;--rule:#c6c3bb;--shell:#f6f4ee;--stamp:#2c6e63;--alert:#a63a20;--mute:#6f6a60}
+*{box-sizing:border-box}
+body{margin:0;background:var(--shell);color:var(--ink);font-family:system-ui,"Segoe UI",sans-serif}
+.ad-sheet{max-width:1120px;margin:0 auto;padding:16px 18px 28px}
+.ad-head{border-bottom:3px double var(--ink);padding-bottom:9px}
+.ad-head h1{margin:0;font-size:18px;letter-spacing:2px}
+.ad-facts{margin:7px 0 0;font-size:12px;color:var(--mute);line-height:2.1}
+.ad-facts b{font-family:ui-monospace,Consolas,monospace;color:var(--ink);font-weight:600;margin-right:12px}
+.ad-facts i{font-style:normal;padding:0 4px;margin-right:10px}
+.ad-facts i.yes{color:var(--stamp);border-bottom:2px solid var(--stamp)}
+.ad-facts i.no{color:var(--alert);border-bottom:2px solid var(--alert)}
+.ad-frame{margin-top:15px}
+.ad-rail{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--mute);
+  font-family:ui-monospace,Consolas,monospace;margin-bottom:3px}
+.ad-rail b{width:54px;flex:0 0 54px;font-weight:500}
+.ad-stripes{margin:0;padding:0;list-style:none}
+.ad-stripe{display:flex;align-items:center;gap:4px;padding:1px 0}
+.ad-lead{flex:0 0 54px;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.ad-nib{flex:0 0 17px;height:17px;border:1px solid var(--rule);background:#fff;
+  font-family:ui-monospace,Consolas,monospace;font-size:11px;line-height:15px;text-align:center;color:var(--mute)}
+.ad-nib.self{background:#dcebe7;border-color:var(--stamp);color:var(--stamp)}
+.ad-nib.away{background:#f6e2da;border-color:var(--alert);color:var(--alert)}
+.ad-note{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--mute);margin-left:8px}
+.ad-run{margin-top:14px;border-top:1px dotted var(--rule);padding-top:8px}
+.ad-chain{display:flex;flex-wrap:wrap;gap:5px;align-items:center;
+  font-family:ui-monospace,Consolas,monospace;font-size:11px}
+.ad-step{border:1px solid var(--rule);background:#fff;padding:2px 6px}
+.ad-step.away{border-color:var(--alert)}
+.ad-arrow{color:var(--mute)}
+.ad-alias{margin-top:14px;width:100%;border-collapse:collapse;background:#fff;font-size:12px}
+.ad-alias th,.ad-alias td{border-top:1px solid var(--rule);padding:4px 7px;text-align:left}
+.ad-alias th{background:#eceae2;font-weight:600}
+.ad-alias td.n{font-family:ui-monospace,Consolas,monospace}
+.ad-foot{margin-top:16px;border-top:3px double var(--ink);padding-top:9px}
+.ad-fails{margin:0 0 8px;font-size:12px;color:var(--mute);line-height:1.8}
+.ad-fails em{font-style:normal;color:var(--alert);font-family:ui-monospace,Consolas,monospace}
+.ad-tools{display:flex;flex-wrap:wrap;align-items:center;gap:9px}
+.ad-tools label{font-size:12px;color:var(--mute)}
+.ad-tools input{width:74px;font:inherit;font-family:ui-monospace,Consolas,monospace;padding:3px 5px;
+  border:1px solid var(--rule);background:#fff}
+.ad-tools button{font:inherit;font-size:12px;padding:4px 10px;border:1px solid var(--ink);background:#fff;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="ad-sheet">
+<header class="ad-head">
+  <h1>aliasdraw 份数落点阵</h1>
+  <p class="ad-facts" id="facts">正在读场景</p>
+</header>
+<main>
+  <section class="ad-frame">
+    <div class="ad-rail" id="rail"></div>
+    <ol class="ad-stripes" id="stripes"></ol>
+  </section>
+  <section class="ad-run">
+    <div class="ad-chain" id="chain"></div>
+  </section>
+  <section>
+    <table class="ad-alias" id="aliases"></table>
+  </section>
+</main>
+<footer class="ad-foot">
+  <p class="ad-fails" id="fails"></p>
+  <div class="ad-tools">
+    <label>权重<input id="weightIn" value="3"></label>
+    <label>下标<input id="atIn" value="0"></label>
+    <label>种子<input id="seedIn" value="9"></label>
+    <label>次数<input id="countIn" value="4"></label>
+    <button id="doBuild">建表</button>
+    <button id="doAdd">加权重</button>
+    <button id="doSet">改权重</button>
+    <button id="doWind">拨种子</button>
+    <button id="doDraw">抽取</button>
+  </div>
+</footer>
+</div>
+<script type="module">
+import { render } from "./app.js";
+
+let spec = null;
+
+function stamp(text, ok) {
+  const node = document.createElement("i");
+  node.className = ok ? "yes" : "no";
+  node.textContent = text;
+  return node;
+}
+
+function drawFacts(view) {
+  const box = document.getElementById("facts");
+  box.textContent = "";
+  const bits = ["项数 " + view.weights.length, "总和 " + view.total, "建表 " + view.built,
+                "抽取 " + view.drawn, "走别名 " + view.alias_used, "随机数 " + view.rng];
+  bits.forEach(function (text) {
+    const node = document.createElement("b");
+    node.textContent = text;
+    box.appendChild(node);
+  });
+  box.appendChild(stamp("份数守恒", view.sum_ok));
+  box.appendChild(stamp("别名闭合", view.alias_ok));
+  box.appendChild(stamp("记录自洽", view.records_ok));
+  box.appendChild(stamp("命中自洽", view.hits_ok));
+}
+
+function drawLattice(view) {
+  const rail = document.getElementById("rail");
+  rail.textContent = "";
+  const head = document.createElement("b");
+  head.textContent = "第几次";
+  rail.appendChild(head);
+  for (let step = 0; step < view.steps.length; step += 1) {
+    const mark = document.createElement("span");
+    mark.className = "ad-nib";
+    mark.textContent = String(step + 1);
+    rail.appendChild(mark);
+  }
+  const stripes = document.getElementById("stripes");
+  stripes.textContent = "";
+  view.rows.forEach(function (row) {
+    const line = document.createElement("li");
+    line.className = "ad-stripe";
+    const lead = document.createElement("span");
+    lead.className = "ad-lead";
+    lead.textContent = "项" + row.at;
+    line.appendChild(lead);
+    row.cells.forEach(function (mark) {
+      const nib = document.createElement("span");
+      nib.className = "ad-nib" + (mark === "自" ? " self" : (mark === "改" ? " away" : ""));
+      nib.textContent = mark;
+      line.appendChild(nib);
+    });
+    const note = document.createElement("span");
+    note.className = "ad-note";
+    const to = row.alias < 0 ? "自己" : ("项" + row.alias);
+    note.textContent = "权重 " + row.weight + " · 份数 " + row.prob + "/" + view.total
+      + " · 超出给 " + to + " · 命中 " + row.hits;
+    line.appendChild(note);
+    stripes.appendChild(line);
+  });
+}
+
+function drawChain(view) {
+  const chain = document.getElementById("chain");
+  chain.textContent = "";
+  if (view.steps.length === 0) {
+    chain.textContent = "还没有抽取记录";
+    return;
+  }
+  view.steps.forEach(function (step, at) {
+    if (at > 0) {
+      const arrow = document.createElement("span");
+      arrow.className = "ad-arrow";
+      arrow.textContent = "→";
+      chain.appendChild(arrow);
+    }
+    const node = document.createElement("span");
+    node.className = "ad-step" + (step.byAlias === 1 ? " away" : "");
+    node.textContent = "#" + (step.step + 1) + " 项" + step.pick + " 切点" + step.cut
+      + (step.byAlias === 1 ? " 改名→项" + step.item : " 自取");
+    chain.appendChild(node);
+  });
+}
+
+function drawAliases(view) {
+  const table = document.getElementById("aliases");
+  table.textContent = "";
+  const head = document.createElement("tr");
+  ["项", "权重", "份数", "超出给", "命中"].forEach(function (text) {
+    const th = document.createElement("th");
+    th.textContent = text;
+    head.appendChild(th);
+  });
+  table.appendChild(head);
+  view.rows.forEach(function (row) {
+    const tr = document.createElement("tr");
+    const values = ["项" + row.at, String(row.weight), row.prob + "/" + view.total,
+                    row.alias < 0 ? "自己" : ("项" + row.alias), String(row.hits)];
+    values.forEach(function (text) {
+      const td = document.createElement("td");
+      td.className = "n";
+      td.textContent = text;
+      tr.appendChild(td);
+    });
+    table.appendChild(tr);
+  });
+}
+
+function draw() {
+  const view = render(spec);
+  drawFacts(view);
+  drawLattice(view);
+  drawChain(view);
+  drawAliases(view);
+  const fails = document.getElementById("fails");
+  fails.textContent = "";
+  if (view.failed_marks.length === 0) {
+    fails.textContent = "场景 " + view.count_events + " 条事件全部走通。";
+    return;
+  }
+  fails.appendChild(document.createTextNode("场景 " + view.count_events + " 条事件里 "
+    + view.failed_marks.length + " 条被拦下："));
+  view.failed_marks.forEach(function (pair, at) {
+    if (at > 0) {
+      fails.appendChild(document.createTextNode("，"));
+    }
+    const mark = document.createElement("em");
+    mark.textContent = pair[0] + " 报 " + pair[1];
+    fails.appendChild(mark);
+  });
+}
+
+function push(event) {
+  spec.events.push(event);
+  draw();
+}
+
+document.getElementById("doBuild").addEventListener("click", function () {
+  push({ kind: "build" });
+});
+document.getElementById("doAdd").addEventListener("click", function () {
+  push({ kind: "add", weight: Number(document.getElementById("weightIn").value) });
+});
+document.getElementById("doSet").addEventListener("click", function () {
+  push({ kind: "set", at: Number(document.getElementById("atIn").value),
+         weight: Number(document.getElementById("weightIn").value) });
+});
+document.getElementById("doWind").addEventListener("click", function () {
+  push({ kind: "wind", seed: Number(document.getElementById("seedIn").value) });
+});
+document.getElementById("doDraw").addEventListener("click", function () {
+  push({ kind: "draw", count: Number(document.getElementById("countIn").value) });
+});
+
+fetch("sample/table.json").then(function (reply) {
+  return reply.json();
+}).then(function (data) {
+  spec = data;
+  draw();
+}).catch(function () {
+  document.getElementById("facts").textContent = "场景读不动，请按 README 起本地服务再打开";
+});
+</script>
+</body>
+</html>
